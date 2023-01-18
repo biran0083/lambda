@@ -1,0 +1,70 @@
+fn append(a, b) {
+  if is_nil(a) {
+    b
+  } else {
+    pair(first(a), append(rest(a), b))
+  }
+}
+
+fn split(lst) {
+  if is_nil(lst) {
+    pair([], [])
+  } else {
+    let a = first(lst);
+    let parts = split(rest(lst));
+    let left = first(parts);
+    let right = rest(parts);
+    pair(pair(a, right), left)
+  }
+}
+
+fn merge(a, b) {
+  if is_nil(a) {
+    b
+  } else {
+    if is_nil(b) {
+      a
+    } else {
+      let a0 = first(a);
+      let b0 = first(b);
+      if a0 < b0 {
+        pair(a0, merge(rest(a), b))
+      } else {
+        pair(b0, merge(rest(b), a))
+      }
+    }
+  }
+}
+
+fn msort(lst) {
+  if is_nil(lst) || is_nil(rest(lst)) {
+    lst
+  } else {
+    let parts = split(lst);
+    let a = first(parts);
+    let b = rest(parts);
+    merge(msort(a), msort(b))
+  }
+}
+
+fn test(cases) {
+  if is_nil(cases) {
+    0
+  } else {
+    let lst = first(cases);
+    let _ = print_int_list(msort(lst));
+    test(rest(cases))
+  }
+}
+
+fn main() {
+  test([
+    [],
+    [1],
+    [1,2],
+    [2,1],
+    [1,2,7,3,4,5,6],
+    [1,1,2,2,3,3,3],
+    [23,54,72,73,2,6,9,3,1]
+  ])
+}

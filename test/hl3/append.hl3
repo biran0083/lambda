@@ -1,0 +1,25 @@
+fn append(a, b) {
+  if is_nil(a) {
+    b
+  } else {
+    pair(first(a), append(rest(a), b))
+  }
+}
+fn test(cases) {
+  if is_nil(cases) {
+    0
+  } else {
+    let pair = first(cases);
+    let a = first(pair);
+    let b = rest(pair);
+    let _ = print_int_list(append(a, b));
+    test(rest(cases))
+  }
+}
+fn main() {
+  test([
+    pair([], [1,2]),
+    pair([1,2], []),
+    pair([1,2], [3, 4])
+  ])
+}

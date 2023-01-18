@@ -1,0 +1,20 @@
+fn fib(n) {
+  if n < 2 {
+    n
+  } else {
+    fib(n-1) + fib(n-2)
+  }
+}
+
+fn helper(n) {
+  if n == 0 {
+    0
+  } else {
+    let _ = helper(n-1);
+    print_int(fib(n))
+  }
+}
+
+fn main() {
+  helper(6)
+}
