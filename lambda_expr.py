@@ -1,5 +1,5 @@
 #!python3
-from lambda_parser import LambdaParser
+from lambda_parser import parse
 
 void = '(lambda x: x)'
 true = f'(lambda true: (lambda false: true({void})))'
@@ -20,7 +20,7 @@ def print_int_list(exp):
     return eval(void)
 
 def eval_lambda_exp(s):
-    return LambdaParser(s).parse().eval({
+    return parse(s).eval({
         'print_int': print_int,
         'print_bool': print_bool,
         'print_int_list': print_int_list,

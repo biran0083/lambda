@@ -1,5 +1,7 @@
 #!python3
-import string
+from ply import lex
+from ply import yacc
+
 class Closure:
     def __init__(self, fun, env):
         self.fun = fun
@@ -43,77 +45,57 @@ class Apply(Exp):
         f = self.fun.eval(env)
         return f(arg)
     
-class ParserBase:
-    def __init__(self, exp):
-        self.exp = exp
-        self.i = 0
-        self.token_buffer = []
-        self.reserved_tokens = '():+-*'
-        self.symbol_alphabet = string.ascii_lowercase + string.ascii_uppercase + string.digits + '_'
+tokens = ('LPAREN', 'RPAREN', 'LAMBDA', 'COLON', 'VAR')
 
-    def parse(self):
-        pass
+t_LPAREN = r'\('
+t_RPAREN = r'\)'
+t_LAMBDA = 'lambda'
+t_COLON = ':'
+t_ignore = '[ \t\n\r]'
 
-    def _has_more(self):
-        return self.i < len(self.exp)
+def t_VAR(t):
+    r'[_a-zA-Z][\w_]*'
+    if t.value == 'lambda':
+        t.type = 'LAMBDA'
+    return t
 
-    def _current_char(self):
-        return self.exp[self.i]
+def t_error(t):
+    print(f'Illegal character {t.value[0]!r}')
+    t.lexer.skip(1)
 
-    def _advance(self):
-        self.i += 1
+def p_exp_var(p):
+    """
+    exp : VAR
+    """
+    p[0] = Variable(p[1])
 
-    def _skip_space(self):
-        while self._has_more() and self._current_char() == ' ':
-            self._advance()
-    
-    def _push_back(self, token):
-        self.token_buffer.append(token)
+def p_exp_apply(p):
+    """
+    exp : exp LPAREN exp RPAREN
+    """
+    p[0] = Apply(p[1], p[3])
 
-    def _parse_token(self):
-        if self.token_buffer:
-            return self.token_buffer.pop()
-        self._skip_space()
-        if not self._has_more():
-            return None
-        c = self._current_char()
-        if c in self.reserved_tokens:
-            self._advance()
-            return c
-        token = ''
-        while self._has_more():
-            c = self._current_char()
-            if c in self.symbol_alphabet:
-                token += c
-                self._advance()
-            else:
-                break
-        assert token, f'unknown token at {self.exp[self.i:]}'
-        return token
+def p_exp_lambda(p):
+    """
+    exp : LAMBDA VAR COLON exp
+    """
+    p[0] = Function(p[2], p[4])
 
-class LambdaParser(ParserBase):
+def p_exp_paren(p):
+    """
+    exp : LPAREN exp RPAREN
+    """
+    p[0] = p[2]
 
-    def parse(self):
-        token = self._parse_token()
-        if token == 'lambda':
-            arg = self._parse_token()
-            assert(self._parse_token() == ':')
-            body = self.parse()
-            exp = Function(arg, body)
-        elif token == '(':
-            exp = self.parse()
-            assert(self._parse_token() == ')')
-        else:
-            exp = Variable(token)
-        while 1:
-            token = self._parse_token()
-            if not token:
-                break
-            if token != '(':
-                assert(token == ')')
-                self._push_back(token)
-                break
-            param = self.parse()
-            assert(self._parse_token() == ')')
-            exp = Apply(exp, param)
-        return exp
+def p_error(p):
+    print(f'Syntax error at {p.value!r}')
+
+
+lexer = lex.lex()
+parser = yacc.yacc()
+
+def parse(s):
+    res = parser.parse(s)
+    return res
+
+
