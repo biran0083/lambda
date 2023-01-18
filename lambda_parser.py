@@ -1,57 +1,14 @@
 #!python3
-from ply import lex
-from ply import yacc
+from ply import lex, yacc   
+from lambda_ast import *
 
-class Closure:
-    def __init__(self, fun, env):
-        self.fun = fun
-        self.env = env
-
-    def __call__(self, arg):
-        return self.apply(arg)
-
-    def apply(self, arg):
-        new_env = self.env.copy()
-        new_env[self.fun.arg] = arg
-        return self.fun.body.eval(new_env)
-
-
-class Exp:
-    pass
-
-class Variable(Exp):
-    def __init__(self, name):
-        self.name = name
-
-    def eval(self, env):
-        return env[self.name]
-
-class Function(Exp):
-    def __init__(self, arg, body):
-        self.arg = arg
-        self.body = body
-
-    def eval(self, env):
-        return Closure(self, env)
-
-
-class Apply(Exp):
-    def __init__(self, fun, param):
-        self.fun = fun
-        self.param = param
-
-    def eval(self, env):
-        arg = self.param.eval(env)
-        f = self.fun.eval(env)
-        return f(arg)
-    
 tokens = ('LPAREN', 'RPAREN', 'LAMBDA', 'COLON', 'VAR')
 
 t_LPAREN = r'\('
 t_RPAREN = r'\)'
 t_LAMBDA = 'lambda'
 t_COLON = ':'
-t_ignore = '[ \t\n\r]'
+t_ignore = ' \t\n\r'
 
 def t_VAR(t):
     r'[_a-zA-Z][\w_]*'
@@ -91,10 +48,9 @@ def p_error(p):
     print(f'Syntax error at {p.value!r}')
 
 
-lexer = lex.lex()
-parser = yacc.yacc()
-
 def parse(s):
+    lexer = lex.lex()
+    parser = yacc.yacc()
     res = parser.parse(s)
     return res
 
