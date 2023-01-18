@@ -1,128 +1,30 @@
 #!python3
-import string
+from lambda_parser import LambdaParser
+
 void = '(lambda x: x)'
 true = f'(lambda true: (lambda false: true({void})))'
 false = f'(lambda true: (lambda false: false({void})))'
 nil = f'(lambda onPair: (lambda onNil: onNil({void})))'
+YCombinator = '(lambda y: (lambda F: F(lambda x: y(y)(F)(x))))(lambda y: (lambda F: F(lambda x: y(y)(F)(x))))'
 
-class Closure:
-    def __init__(self, fun, env):
-        self.fun = fun
-        self.env = env
+def print_int(exp):
+    print(natify_church_numeral(exp))
+    return eval(void)
 
-    def __call__(self, arg):
-        return self.apply(arg)
+def print_bool(exp):
+    print(natify_bool(exp))
+    return eval(void)
 
-    def apply(self, arg):
-        new_env = self.env.copy()
-        new_env[self.fun.arg] = arg
-        return self.fun.body.eval(new_env)
+def print_int_list(exp):
+    print(natify_int_list(exp))
+    return eval(void)
 
-
-class Exp:
-    pass
-
-class Variable(Exp):
-    def __init__(self, name):
-        self.name = name
-
-    def eval(self, env):
-        return env[self.name]
-
-class Function(Exp):
-    def __init__(self, arg, body):
-        self.arg = arg
-        self.body = body
-
-    def eval(self, env):
-        return Closure(self, env)
-
-
-class Apply(Exp):
-    def __init__(self, fun, param):
-        self.fun = fun
-        self.param = param
-
-    def eval(self, env):
-        arg = self.param.eval(env)
-        f = self.fun.eval(env)
-        return f(arg)
-    
-class ParserBase:
-    def __init__(self, exp):
-        self.exp = exp
-        self.i = 0
-        self.token_buffer = []
-        self.reserved_tokens = '():+-*'
-        self.symbol_alphabet = string.ascii_lowercase + string.ascii_uppercase + string.digits + '_'
-
-    def parse(self):
-        pass
-
-    def _has_more(self):
-        return self.i < len(self.exp)
-
-    def _current_char(self):
-        return self.exp[self.i]
-
-    def _advance(self):
-        self.i += 1
-
-    def _skip_space(self):
-        while self._has_more() and self._current_char() == ' ':
-            self._advance()
-    
-    def _push_back(self, token):
-        self.token_buffer.append(token)
-
-    def _parse_token(self):
-        if self.token_buffer:
-            return self.token_buffer.pop()
-        self._skip_space()
-        if not self._has_more():
-            return None
-        c = self._current_char()
-        if c in self.reserved_tokens:
-            self._advance()
-            return c
-        token = ''
-        while self._has_more():
-            c = self._current_char()
-            if c in self.symbol_alphabet:
-                token += c
-                self._advance()
-            else:
-                break
-        assert token, f'unknown token at {self.exp[self.i:]}'
-        return token
-
-class LambdaParser(ParserBase):
-
-    def parse(self):
-        token = self._parse_token()
-        if token == 'lambda':
-            arg = self._parse_token()
-            assert(self._parse_token() == ':')
-            body = self.parse()
-            exp = Function(arg, body)
-        elif token == '(':
-            exp = self.parse()
-            assert(self._parse_token() == ')')
-        else:
-            exp = Variable(token)
-        while 1:
-            token = self._parse_token()
-            if not token:
-                break
-            if token != '(':
-                assert(token == ')')
-                self._push_back(token)
-                break
-            param = self.parse()
-            assert(self._parse_token() == ')')
-            exp = Apply(exp, param)
-        return exp
-                
+def eval_lambda_exp(s):
+    return LambdaParser(s).parse().eval({
+        'print_int': print_int,
+        'print_bool': print_bool,
+        'print_int_list': print_int_list,
+    })
                 
 def pair(exp1, exp2):
     return f'(lambda onPair: (lambda onNil: onPair({exp1})({exp2})))'
@@ -160,9 +62,6 @@ def natify_int_list(exp):
     helper(exp)
     return res
 
-def eval_lambda_exp(s):
-    return LambdaParser(s).parse().eval({})
-
 def natify_bool(exp):
     return exp(lambda _: True)(lambda _: False)
 
@@ -199,12 +98,10 @@ def eq(a, b):
 def mul(exp1, exp2):
     return f'(lambda g: (lambda z: {exp1}(lambda x: {exp2}(g)(x))(z)))'
 
-pred = '(lambda n : (lambda f: (lambda z: n(lambda g: lambda h: h(g(f)))(lambda u: z)(lambda u: u))))'
 
 def sub(exp1, exp2):
+    pred = '(lambda n : (lambda f: (lambda z: n(lambda g: lambda h: h(g(f)))(lambda u: z)(lambda u: u))))'
     return f'{exp2}({pred})({exp1})'
-
-YCombinator = '(lambda y: (lambda F: F(lambda x: y(y)(F)(x))))(lambda y: (lambda F: F(lambda x: y(y)(F)(x))))'
 
 
 def let(name, value, body):
