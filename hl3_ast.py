@@ -14,7 +14,7 @@ class Prog(namedtuple('Prog', ['funcs'])):
             return multi_arg_call('main', [])
         f = self.funcs[i]
         return let_rec(f.fname, 
-                       multi_arg_function(f.args, f.body.compile()),
+                       f.compile(),
                        self.helper(i + 1))
 
     def compile(self):

@@ -1,0 +1,15 @@
+fn map(f, a) {
+  if is_nil(a) {
+    []
+  } else {
+    pair(f(first(a)), map(f, rest(a)))
+  }
+}
+
+fn add_one(x) {
+  x + 1
+}
+
+fn main() {
+  print_int_list(map(add_one, [1,2,3]))
+}

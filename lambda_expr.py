@@ -7,17 +7,19 @@ false = f'(lambda true: (lambda false: false({void})))'
 nil = f'(lambda onPair: (lambda onNil: onNil({void})))'
 YCombinator = '(lambda y: (lambda F: F(lambda x: y(y)(F)(x))))(lambda y: (lambda F: F(lambda x: y(y)(F)(x))))'
 
+def dummy(x): return x
+
 def print_int(exp):
     print(natify_church_numeral(exp))
-    return eval(void)
+    return dummy
 
 def print_bool(exp):
     print(natify_bool(exp))
-    return eval(void)
+    return dummy
 
 def print_int_list(exp):
     print(natify_int_list(exp))
-    return eval(void)
+    return dummy
 
 def eval_lambda_exp(s):
     return parse(s).eval({

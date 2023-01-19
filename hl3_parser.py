@@ -1,3 +1,4 @@
+#!python3
 from ply import lex, yacc
 from hl3_ast import *
 
